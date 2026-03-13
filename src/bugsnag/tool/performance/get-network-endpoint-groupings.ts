@@ -1,0 +1,52 @@
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ZodRawShape } from "zod";
+import { z } from "zod";
+import { Tool } from "../../../common/tools";
+import type { ToolParams } from "../../../common/types";
+import type { BugsnagClient } from "../../client";
+import { toolInputParameters } from "../../input-schemas";
+
+const GetNetworkGroupingInputSchema = z.object({
+  projectId: toolInputParameters.projectId,
+});
+
+export class GetNetworkEndpointGroupings extends Tool<BugsnagClient> {
+  specification: ToolParams = {
+    title: "Get Network Endpoint Groupings",
+    summary: "Get the network endpoint grouping rules for a project",
+    purpose:
+      "Retrieve the URL patterns used to group network spans for performance monitoring",
+    useCases: [
+      "View current network endpoint grouping configuration",
+      "Understand how network requests are being grouped in performance monitoring",
+      "Check grouping patterns before making updates",
+    ],
+    inputSchema: GetNetworkGroupingInputSchema,
+    examples: [
+      {
+        description: "Get network grouping rules for a project",
+        parameters: {},
+        expectedOutput: "Array of endpoint URL patterns",
+      },
+    ],
+    hints: [
+      "Network grouping patterns help consolidate similar requests into single span groups",
+      "Patterns use OpenAPI path templating syntax with curly braces for path parameters (e.g., /users/{userId})",
+      "Wildcards (*) can be used in domains to match multiple subdomains (e.g., https://*.example.com)",
+    ],
+    readOnly: true,
+    idempotent: true,
+  };
+
+  handle: ToolCallback<ZodRawShape> = async (args, _extra) => {
+    const params = GetNetworkGroupingInputSchema.parse(args);
+    const project = await this.client.getInputProject(params.projectId);
+    const result =
+      await this.client.projectApi.getProjectNetworkGroupingRuleset(project.id);
+    return {
+      content: [
+        { type: "text", text: JSON.stringify(result.body.endpoints || []) },
+      ],
+    };
+  };
+}

@@ -8,7 +8,7 @@ import type { Client, ToolParams } from "./types";
  */
 export class ToolError extends Error {
   // can be used to set misc properties like response status code, etc.
-  public metadata?: Map<string, any> | undefined;
+  public metadata: Map<string, any> | undefined;
 
   constructor(
     cause?: string | undefined,
@@ -26,9 +26,11 @@ export class ToolError extends Error {
  */
 export abstract class Tool<T extends Client> {
   protected readonly client: T;
+
   constructor(client: T) {
     this.client = client;
   }
+
   abstract specification: ToolParams;
   abstract handle: ToolCallback<ZodRawShape>;
 }
